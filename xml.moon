@@ -12,8 +12,7 @@ pair= (buffer = {}) ->
 
   environment = {}
   escape = (value) ->
-    res = tostring(value)\gsub [[[<>&]'"]], escapes
-    res
+    (=>@) tostring(value)\gsub [[[<>&]'"]], escapes
 
   split = (tab) ->
     ary = {}
