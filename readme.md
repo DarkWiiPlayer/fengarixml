@@ -26,7 +26,7 @@ and could also be written as
 				height: 90
 
 Note that I intend to use this mainly inside [Vim](https://vim.sourceforge.io/), where I have a macro set up to feed the visual selection through the moonscript interpreter and replace it with its output.
-I literally just copied the above code example, selected it, pressed Ctrl+Enter and it turned into the HTML code you see.
+I literally just copied the above code example, selected it, pressed Ctrl+Enter and it turned into the SVG code you see.
 It's really useful and I can really recommend it to every vim user out there.
 
 License: [The Unlicense](license.md)
