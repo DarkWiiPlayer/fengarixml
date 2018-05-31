@@ -149,7 +149,7 @@ else
 end
 local render
 render = function(fnc)
-  return build(fnc).render()
+  return build(fnc):render()
 end
 return {
   render = render,

@@ -95,6 +95,6 @@ else
     buf
 
 render = (fnc) ->
-  build(fnc).render!
+  build(fnc)\render!
 
 {:render, :build, :pair}
