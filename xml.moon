@@ -23,10 +23,16 @@ pair= (buffer = {}) ->
 
   flatten = (tab, flat={}) ->
     for key, value in pairs tab
-      if type(value)=="table"
-        flatten(value, flat)
+      if type(key)=="number"
+        if type(value)=="table"
+          flatten(value, flat)
+        else
+          flat[#flat+1]=value
       else
-        flat[key] = value
+        if type(value)=="table"
+          flat[key] = table.concat value ' '
+        else
+          flat[key] = value
     flat
 
   attrib = (args) ->
@@ -57,7 +63,6 @@ pair= (buffer = {}) ->
 
   environment.tag = (tagname, ...) ->
     inner, args = split flatten {...}
-
     table.insert buffer, "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
     handle inner unless #inner==0
     table.insert buffer, "</#{tagname}>" unless (#inner==0)
