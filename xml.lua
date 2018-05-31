@@ -16,8 +16,9 @@ pair = function(buffer)
   local environment = { }
   local escape
   escape = function(value)
-    local res = tostring(value):gsub([[[<>&]'"]], escapes)
-    return res
+    return (function(self)
+      return self
+    end)(tostring(value):gsub([[[<>&]'"]], escapes))
   end
   local split
   split = function(tab)
@@ -34,10 +35,18 @@ pair = function(buffer)
       flat = { }
     end
     for key, value in pairs(tab) do
-      if type(value) == "table" then
-        flatten(value, flat)
+      if type(key) == "number" then
+        if type(value) == "table" then
+          flatten(value, flat)
+        else
+          flat[#flat + 1] = value
+        end
       else
-        flat[key] = value
+        if type(value) == "table" then
+          flat[key] = table.concat(value(' '))
+        else
+          flat[key] = value
+        end
       end
     end
     return flat
@@ -111,23 +120,36 @@ pair = function(buffer)
   return environment, buffer
 end
 local build
-build = function(fnc)
-  local env, buf = pair()
-  local hlp
-  do
-    local _ENV = env
-    hlp = function()
-      return aaaaa
-    end
+if _VERSION == 'lua 5.1' then
+  build = function(fnc)
+    assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
+    local env, buf = pair
+    setfenv(fnc, env)
+    fnc()
+    return buf
   end
-  assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
-  debug.upvaluejoin(fnc, 1, hlp, 1)
-  fnc()
-  return buf
+else
+  build = function(fnc)
+    assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
+    local env, buf = pair()
+    local hlp
+    do
+      local _ENV = env
+      hlp = function()
+        return aaaaa
+      end
+    end
+    debug.upvaluejoin(fnc, 1, hlp, 1)
+    fnc()
+    buf.render = function(self)
+      return table.concat(self, "\n")
+    end
+    return buf
+  end
 end
 local render
 render = function(fnc)
-  return table.concat(build(fnc), '\n')
+  return build(fnc).render()
 end
 return {
   render = render,

@@ -75,17 +75,26 @@ pair= (buffer = {}) ->
   }
   return environment, buffer
 
-build = (fnc) ->
-  env, buf = pair!
-  hlp = do -- gotta love this syntax ♥
-    _ENV = env
-    -> aaaaa -- needs to access a global to get the environment upvalue
-  assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-  debug.upvaluejoin(fnc, 1, hlp, 1) -- Set environment
-  fnc!
-  buf
+build = if _VERSION == 'lua 5.1' then
+  (fnc) ->
+    assert(type(fnc)=='function', 'wrong argument to render, expecting function')
+    env, buf = pair
+    setfenv(fnc, env)
+    fnc!
+    buf
+else
+  (fnc) ->
+    assert(type(fnc)=='function', 'wrong argument to render, expecting function')
+    env, buf = pair!
+    hlp = do -- gotta love this syntax ♥
+      _ENV = env
+      -> aaaaa -- needs to access a global to get the environment upvalue
+    debug.upvaluejoin(fnc, 1, hlp, 1) -- Set environment
+    fnc!
+    buf.render = => table.concat @, "\n"
+    buf
 
 render = (fnc) ->
-  return table.concat build(fnc), '\n'
+  build(fnc).render!
 
 {:render, :build, :pair}
