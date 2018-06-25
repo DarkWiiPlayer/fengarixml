@@ -29,6 +29,21 @@ and could also be written as
 
 The `strbuffer` rock can be found [here](https://github.com/darkwiiplayer/lua_strbuffer)
 
+Warning
+-----
+
+Because of how lua works, once a function is passed into `render` or `build`, its upvalues are permanently changed. This means functions may become otherwise unusable, and shouldn't be used for more than one template at the same time. Seriously, things might explode and kittens may die.
+
+Sort-Of Reference
+-----
+
+There isn't much to say; `moonxml.build(fn)` takes a single function as its argument and sets its environment to a special table where all *unknown* values are turned into functions that generate XML tags. It returns a function that can be called with another function as its single argument which handles output `moonxml.build(fn)(out)`. For example, you could write `moonxml.build(->h1 'hello world')(print)` to print `<h1>hello world</h1>`. A shorthand for this is `moonxml.render(out, fn)`, as seen in the example above.
+
+Compatibility with Lapis
+-----
+
+Even less an issue than with [MoonHTML](//github.com/darkwiiplayer/moonhtml). MoonXML is **not** meant for HTML generation, but for XML (Mostly SVG). Expect details to work differently.
+
 Changelog
 -----
 
