@@ -1,17 +1,10 @@
+buf = require"strbuffer"("\n")
+
+package.path = '?.lua'
 import render from require 'xml'
 
-doc_style = [[
-	rect {
-		fill: rebeccapurple;
-		transition: fill 0.3s;
-	}
-	rect:hover {
-		fill: red;
-	}
-]]
-
-print render ->
-	svg{
+render buf\append, ->
+	svg {
 		-> defs -> style doc_style
 		height: 100
 		width: 100
@@ -19,3 +12,5 @@ print render ->
 		->
 			rect x: 5, y: 5, width: 90, height: 90
 	}
+
+print(buf)

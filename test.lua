@@ -1,14 +1,14 @@
+local buf = require("strbuffer")("\n")
+package.path = '?.lua'
 local render
 render = require('xml').render
-local doc_style = [[  rect {
-    fill: rebeccapurple;
-    transition: fill 0.3s;
-  }
-  rect:hover {
-    fill: red;
-  }
-]]
-return print(render(function()
+render((function()
+  local _base_0 = buf
+  local _fn_0 = _base_0.append
+  return function(...)
+    return _fn_0(_base_0, ...)
+  end
+end)(), function()
   return svg({
     function()
       return defs(function()
@@ -27,4 +27,5 @@ return print(render(function()
       })
     end
   })
-end))
+end)
+return print(buf)

@@ -6,10 +6,7 @@ escapes = {
 	["'"]: '&#039;'
 }
 
-pair= (buffer = {}) ->
-	if type(buffer) != 'table'
-		error 2, "Argument must be a table or nil"
-
+env = ->
 	environment = {}
 	escape = (value) ->
 		(=>@) tostring(value)\gsub [[[<>&]'"]], escapes
@@ -53,48 +50,48 @@ pair= (buffer = {}) ->
 				when 'function'
 					arg!
 				else
-					table.insert buffer, tostring arg
+					env.print tostring arg
 
 	environment.raw = (text) ->
-		table.insert buffer, text
+		env.print text
 
 	environment.text = (text) ->
-		table.insert buffer, (escape text)
+		raw escape text
 
 	environment.tag = (tagname, ...) ->
 		inner, args = split flatten {...}
-		table.insert buffer, "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
+		env.print "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
 		handle inner unless #inner==0
-		table.insert buffer, "</#{tagname}>" unless (#inner==0)
-
+		env.print "</#{tagname}>" unless (#inner==0)
 
 	setmetatable environment, {
 		__index: (key) =>
 			_ENV[key] or (...) ->
 				environment.tag(key, ...)
 	}
-	return environment, buffer
+	return environment
 
 build = if _VERSION == 'lua 5.1' then
 	(fnc) ->
 		assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-		env, buf = pair
+		env = env!
 		setfenv(fnc, env)
-		fnc!
-		buf
+		return (out=print, ...) ->
+			env.raw = print
+			return fnc(...)
 else
 	(fnc) ->
 		assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-		env, buf = pair!
-		hlp = do -- gotta love this syntax ♥
+		env = env!
+		do -- gotta love this syntax ♥
+			upvaluejoin = debug.upvaluejoin
 			_ENV = env
-			-> aaaaa -- needs to access a global to get the environment upvalue
-		debug.upvaluejoin(fnc, 1, hlp, 1) -- Set environment
-		fnc!
-		buf.render = => table.concat @, "\n"
-		buf
+			upvaluejoin(fnc, 1, (-> aaaaa), 1) -- Set environment
+		return (out=print, ...) ->
+			env.print = out
+			return fnc(...)
 
-render = (fnc) ->
-	build(fnc)\render!
+render = (out, fnc) ->
+	build(fnc)(out)
 
-{:render, :build, :pair}
+{:render, :build, :env}
