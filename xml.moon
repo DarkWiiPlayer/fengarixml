@@ -8,6 +8,7 @@ escapes = {
 
 env = ->
 	environment = {}
+	print = (...) -> environment.print ...
 	escape = (value) ->
 		(=>@) tostring(value)\gsub [[[<>&]'"]], escapes
 
@@ -50,19 +51,19 @@ env = ->
 				when 'function'
 					arg!
 				else
-					env.print tostring arg
+					print tostring arg
 
 	environment.raw = (text) ->
-		env.print text
+		print text
 
 	environment.text = (text) ->
 		raw escape text
 
 	environment.tag = (tagname, ...) ->
 		inner, args = split flatten {...}
-		env.print "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
+		print "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
 		handle inner unless #inner==0
-		env.print "</#{tagname}>" unless (#inner==0)
+		print "</#{tagname}>" unless (#inner==0)
 
 	setmetatable environment, {
 		__index: (key) =>
@@ -88,7 +89,7 @@ else
 			_ENV = env
 			upvaluejoin(fnc, 1, (-> aaaa!), 1) -- Set environment
 		return (out=print, ...) ->
-			env.print = out
+			print = out
 			return fnc(...)
 
 render = (out, fnc) ->
