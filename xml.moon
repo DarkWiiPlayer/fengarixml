@@ -75,21 +75,21 @@ env = ->
 build = if _VERSION == 'Lua 5.1' then
 	(fnc) ->
 		assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-		env = env!
-		setfenv(fnc, env)
+		environment = env!
+		setfenv(fnc, environment)
 		return (out=print, ...) ->
-			env.raw = print
+			environment.print = out
 			return fnc(...)
 else
 	(fnc) ->
 		assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-		env = env!
+		environment = env!
 		do -- gotta love this syntax ♥
 			upvaluejoin = debug.upvaluejoin
-			_ENV = env
+			_ENV = environment
 			upvaluejoin(fnc, 1, (-> aaaa!), 1) -- Set environment
 		return (out=print, ...) ->
-			print = out
+			environment.print = out
 			return fnc(...)
 
 render = (out, fnc) ->

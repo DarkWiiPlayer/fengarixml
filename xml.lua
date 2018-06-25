@@ -8,6 +8,10 @@ local escapes = {
 local env
 env = function()
   local environment = { }
+  local print
+  print = function(...)
+    return environment.print(...)
+  end
   local escape
   escape = function(value)
     return (function(self)
@@ -82,12 +86,12 @@ env = function()
       elseif 'function' == _exp_0 then
         arg()
       else
-        env.print(tostring(arg))
+        print(tostring(arg))
       end
     end
   end
   environment.raw = function(text)
-    return env.print(text)
+    return print(text)
   end
   environment.text = function(text)
     return raw(escape(text))
@@ -96,12 +100,12 @@ env = function()
     local inner, args = split(flatten({
       ...
     }))
-    env.print("<" .. tostring(tagname) .. tostring(attrib(args)) .. tostring(#inner == 0 and ' /' or '') .. ">")
+    print("<" .. tostring(tagname) .. tostring(attrib(args)) .. tostring(#inner == 0 and ' /' or '') .. ">")
     if not (#inner == 0) then
       handle(inner)
     end
     if not ((#inner == 0)) then
-      return env.print("</" .. tostring(tagname) .. ">")
+      return print("</" .. tostring(tagname) .. ">")
     end
   end
   setmetatable(environment, {
@@ -117,23 +121,23 @@ local build
 if _VERSION == 'Lua 5.1' then
   build = function(fnc)
     assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
-    env = env()
-    setfenv(fnc, env)
+    local environment = env()
+    setfenv(fnc, environment)
     return function(out, ...)
       if out == nil then
         out = print
       end
-      env.raw = print
+      environment.print = out
       return fnc(...)
     end
   end
 else
   build = function(fnc)
     assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
-    env = env()
+    local environment = env()
     do
       local upvaluejoin = debug.upvaluejoin
-      local _ENV = env
+      local _ENV = environment
       upvaluejoin(fnc, 1, (function()
         return aaaa()
       end), 1)
@@ -142,7 +146,7 @@ else
       if out == nil then
         out = print
       end
-      env.print = out
+      environment.print = out
       return fnc(...)
     end
   end
