@@ -106,7 +106,7 @@ env = function()
   end
   setmetatable(environment, {
     __index = function(self, key)
-      return _ENV[key] or function(...)
+      return (_ENV or _G)[key] or function(...)
         return environment.tag(key, ...)
       end
     end
@@ -114,7 +114,7 @@ env = function()
   return environment
 end
 local build
-if _VERSION == 'lua 5.1' then
+if _VERSION == 'Lua 5.1' then
   build = function(fnc)
     assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
     env = env()
@@ -135,7 +135,7 @@ else
       local upvaluejoin = debug.upvaluejoin
       local _ENV = env
       upvaluejoin(fnc, 1, (function()
-        return aaaaa
+        return aaaa()
       end), 1)
     end
     return function(out, ...)

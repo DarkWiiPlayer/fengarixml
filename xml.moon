@@ -66,12 +66,12 @@ env = ->
 
 	setmetatable environment, {
 		__index: (key) =>
-			_ENV[key] or (...) ->
+			(_ENV or _G)[key] or (...) ->
 				environment.tag(key, ...)
 	}
 	return environment
 
-build = if _VERSION == 'lua 5.1' then
+build = if _VERSION == 'Lua 5.1' then
 	(fnc) ->
 		assert(type(fnc)=='function', 'wrong argument to render, expecting function')
 		env = env!
@@ -86,7 +86,7 @@ else
 		do -- gotta love this syntax ♥
 			upvaluejoin = debug.upvaluejoin
 			_ENV = env
-			upvaluejoin(fnc, 1, (-> aaaaa), 1) -- Set environment
+			upvaluejoin(fnc, 1, (-> aaaa!), 1) -- Set environment
 		return (out=print, ...) ->
 			env.print = out
 			return fnc(...)
