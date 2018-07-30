@@ -47,6 +47,10 @@ Even less an issue than with [MoonHTML](//github.com/darkwiiplayer/moonhtml). Mo
 Changelog
 -----
 
+### Development
+
+- There are no more individual environments generated on the fly, but instead, there's just a single environment containing all the XML functions
+
 ### 1.1.0
 
 - MoonXML doesn't have any concept of buffers anymore, instead you pass it a function that handles your output (see examples)

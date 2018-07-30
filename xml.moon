@@ -7,9 +7,16 @@ escapes = {
 }
 
 env = ->
-	environment = {}
-	print = (...) -> environment.print ...
-	escape = (value) ->
+	environment = setmetatable {}, {
+		__index: (key) =>
+			(_ENV or _G)[key] or (...) ->
+				@.tag(key, ...)
+	}
+
+	_G   = environment -- Local, doesn't override global _G in 5.2+
+	_ENV = environment -- Local, doesn't affect outside world anyway
+
+	export escape = (value) ->
 		(=>@) tostring(value)\gsub [[[<>&]'"]], escapes
 
 	split = (tab) ->
@@ -53,46 +60,42 @@ env = ->
 				else
 					print tostring arg
 
-	environment.raw = (text) ->
-		print text
-
-	environment.text = (text) ->
-		raw escape text
-
-	environment.tag = (tagname, ...) ->
+	export tag = (tagname, ...) ->
 		inner, args = split flatten {...}
 		print "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
 		handle inner unless #inner==0
 		print "</#{tagname}>" unless (#inner==0)
 
-	setmetatable environment, {
-		__index: (key) =>
-			(_ENV or _G)[key] or (...) ->
-				environment.tag(key, ...)
-	}
 	return environment
 
-build = if _VERSION == 'Lua 5.1' then
-	(fnc) ->
-		assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-		environment = env!
-		setfenv(fnc, environment)
-		return (out=print, ...) ->
-			environment.print = out
-			return fnc(...)
+make = if _VERSION == 'Lua 5.1' then
+  (environment) ->
+    (fnc) ->
+      assert(type(fnc)=='function', 'wrong argument to render, expecting function')
+      setfenv(fnc, environment)
+      return (out=print, ...) ->
+        environment.print = out
+        return fnc(...)
 else
-	(fnc) ->
-		assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-		environment = env!
-		do -- gotta love this syntax ♥
-			upvaluejoin = debug.upvaluejoin
-			_ENV = environment
-			upvaluejoin(fnc, 1, (-> aaaa!), 1) -- Set environment
-		return (out=print, ...) ->
-			environment.print = out
-			return fnc(...)
+  (environment) ->
+    (fnc) ->
+      assert(type(fnc)=='function', 'wrong argument to render, expecting function')
+      do
+        upvaluejoin = debug.upvaluejoin
+        _ENV = environment
+        upvaluejoin(fnc, 1, (-> aaaa!), 1) -- Set environment
+      return (out=print, ...) ->
+        environment.print = out
+        return fnc(...)
 
 render = (out, fnc) ->
 	build(fnc)(out)
 
-{:render, :build, :env}
+{
+  xml: make env!
+  html: make env!
+  xml_render: (out, fnc) ->
+    build(fnc)(out)
+  html_render: (out, fnc) ->
+    build(fnc)(out)
+}

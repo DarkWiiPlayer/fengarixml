@@ -7,12 +7,15 @@ local escapes = {
 }
 local env
 env = function()
-  local environment = { }
-  local print
-  print = function(...)
-    return environment.print(...)
-  end
-  local escape
+  local environment = setmetatable({ }, {
+    __index = function(self, key)
+      return (_ENV or _G)[key] or function(...)
+        return self.tag(key, ...)
+      end
+    end
+  })
+  local _G = environment
+  local _ENV = environment
   escape = function(value)
     return (function(self)
       return self
@@ -90,13 +93,7 @@ env = function()
       end
     end
   end
-  environment.raw = function(text)
-    return print(text)
-  end
-  environment.text = function(text)
-    return raw(escape(text))
-  end
-  environment.tag = function(tagname, ...)
+  tag = function(tagname, ...)
     local inner, args = split(flatten({
       ...
     }))
@@ -108,46 +105,41 @@ env = function()
       return print("</" .. tostring(tagname) .. ">")
     end
   end
-  setmetatable(environment, {
-    __index = function(self, key)
-      return (_ENV or _G)[key] or function(...)
-        return environment.tag(key, ...)
-      end
-    end
-  })
   return environment
 end
-local build
+local make
 if _VERSION == 'Lua 5.1' then
-  build = function(fnc)
-    assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
-    local environment = env()
-    setfenv(fnc, environment)
-    return function(out, ...)
-      if out == nil then
-        out = print
+  make = function(environment)
+    return function(fnc)
+      assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
+      setfenv(fnc, environment)
+      return function(out, ...)
+        if out == nil then
+          out = print
+        end
+        environment.print = out
+        return fnc(...)
       end
-      environment.print = out
-      return fnc(...)
     end
   end
 else
-  build = function(fnc)
-    assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
-    local environment = env()
-    do
-      local upvaluejoin = debug.upvaluejoin
-      local _ENV = environment
-      upvaluejoin(fnc, 1, (function()
-        return aaaa()
-      end), 1)
-    end
-    return function(out, ...)
-      if out == nil then
-        out = print
+  make = function(environment)
+    return function(fnc)
+      assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
+      do
+        local upvaluejoin = debug.upvaluejoin
+        local _ENV = environment
+        upvaluejoin(fnc, 1, (function()
+          return aaaa()
+        end), 1)
       end
-      environment.print = out
-      return fnc(...)
+      return function(out, ...)
+        if out == nil then
+          out = print
+        end
+        environment.print = out
+        return fnc(...)
+      end
     end
   end
 end
@@ -156,7 +148,12 @@ render = function(out, fnc)
   return build(fnc)(out)
 end
 return {
-  render = render,
-  build = build,
-  env = env
+  xml = make(env()),
+  html = make(env()),
+  xml_render = function(out, fnc)
+    return build(fnc)(out)
+  end,
+  html_render = function(out, fnc)
+    return build(fnc)(out)
+  end
 }
