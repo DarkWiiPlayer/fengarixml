@@ -1,3 +1,10 @@
+void = {key,true for key in *{
+	"area", "base", "br", "col"
+	"command", "embed", "hr", "img"
+	"input", "keygen", "link", "meta"
+	"param", "source", "track", "wbr"
+}}
+
 escapes = {
 	['&']: '&amp;'
 	['<']: '&lt;'
@@ -6,7 +13,7 @@ escapes = {
 	["'"]: '&#039;'
 }
 
-env = ->
+env = (make_tag) ->
 	environment = setmetatable {}, {
 		__index: (key) =>
 			(_ENV or _G)[key] or (...) ->
@@ -40,31 +47,8 @@ env = ->
 					flat[key] = value
 		flat
 
-	attrib = (args) ->
-		res = setmetatable {}, __tostring: =>
-			tab = ["#{key}=\"#{value}\"" for key, value in pairs(@) when type(value)=='string' or type(value)=='number']
-			#tab > 0 and ' '..table.concat(tab,' ') or ''
-		for key, value in pairs(args)
-			if type(key)=='string'
-				res[key] = value
-				r = true
-		return res
-
-	handle = (args) ->
-		for arg in *args
-			switch type(arg)
-				when 'table'
-					handle arg
-				when 'function'
-					arg!
-				else
-					print tostring arg
-
 	export tag = (tagname, ...) ->
-		inner, args = split flatten {...}
-		print "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
-		handle inner unless #inner==0
-		print "</#{tagname}>" unless (#inner==0)
+		make_tag(print, tagname, split flatten {...})
 
 	return environment
 
@@ -91,11 +75,45 @@ else
 render = (out, fnc) ->
 	build(fnc)(out)
 
+attrib = (args) ->
+	res = setmetatable {}, __tostring: =>
+		tab = ["#{key}=\"#{value}\"" for key, value in pairs(@) when type(value)=='string' or type(value)=='number']
+		#tab > 0 and ' '..table.concat(tab,' ') or ''
+	for key, value in pairs(args)
+		if type(key)=='string'
+			res[key] = value
+			r = true
+	return res
+
+--- Handles the inner HTML of a tag
+handle = (print, args) ->
+	for arg in *args
+		switch type(arg)
+			when 'table'
+				handle arg
+			when 'function'
+				arg!
+			else
+				print tostring arg
+
+environment = {
+	xml: env (print, tagname, inner, args) ->
+		print "<#{tagname}#{attrib args}#{#inner==0 and ' /' or ''}>"
+		handle print, inner unless #inner==0
+		print "</#{tagname}>" unless (#inner==0)
+	html: env (print, tagname, inner, args) ->
+		unless void[tagname] and #inner==0
+			print "<#{tagname}#{attrib args}>"
+			handle print, inner unless #inner==0
+			print "</#{tagname}>"
+		else
+			print "<#{tagname}#{attrib args}>"
+}
+environment.html.html5 = ->
+	environment.html.print '<!doctype html5>'
+
 {
-  xml: make env!
-  html: make env!
-  xml_render: (out, fnc) ->
-    build(fnc)(out)
-  html_render: (out, fnc) ->
-    build(fnc)(out)
+	:environment
+	xml: make environment.xml
+	html: make environment.html
 }
