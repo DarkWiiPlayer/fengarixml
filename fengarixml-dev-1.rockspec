@@ -1,10 +1,10 @@
-package = "moonxml"
-version = "dev-2"
+package = "fengarixml"
+version = "dev-1"
 source = {
-   url = "git://github.com/DarkWiiPlayer/moonxml.git";
+   url = "git://github.com/DarkWiiPlayer/fengarixml.git";
 }
 description = {
-   homepage = "https://github.com/DarkWiiPlayer/moonxml";
+   homepage = "https://github.com/DarkWiiPlayer/fengarixml";
    license = "Unlicense";
 }
 dependencies = {
