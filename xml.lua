@@ -1,38 +1,35 @@
-local escapes = {
-  ['&'] = '&amp;',
-  ['<'] = '&lt;',
-  ['>'] = '&gt;',
-  ['"'] = '&quot;',
-  ["'"] = '&#039;'
-}
-local env
+local createelement, createtextnode
 do
-  local createelement, createtext
-  do
-    local global = require('js').global
-    createelement, createtext = (function()
-      local _base_0 = global
-      local _fn_0 = _base_0.createElement
-      return function(...)
-        return _fn_0(_base_0, ...)
-      end
-    end)(), (function()
-      local _base_0 = global
-      local _fn_0 = _base_0.createTextNode
-      return function(...)
-        return _fn_0(_base_0, ...)
-      end
-    end)()
-  end
-  local environment = setmetatable({ }, {
-    __index = function(self, key)
-      return (_ENV or _G)[key] or function(...)
-        return self.tag(key, ...)
-      end
+  local global = require('js').global
+  createelement, createtextnode = (function()
+    local _base_0 = global
+    local _fn_0 = _base_0.createElement
+    return function(...)
+      return _fn_0(_base_0, ...)
     end
-  })
-  local _G = environment
-  local _ENV = environment
+  end)(), (function()
+    local _base_0 = global
+    local _fn_0 = _base_0.createTextNode
+    return function(...)
+      return _fn_0(_base_0, ...)
+    end
+  end)()
+end
+local environment
+do
+  local env
+  do
+    local global = _ENV
+    env = setmetatable({ }, {
+      __index = function(self, key)
+        return global[key] or function(...)
+          return assert(rawget(self, 'node'), 'field "node" is missing!')(key, ...)
+        end
+      end
+    })
+  end
+  local _ENV
+  _ENV, env = env, nil
   escape = function(value)
     return (function(self)
       return self
@@ -44,15 +41,13 @@ do
       flat = { }
     end
     for key, value in pairs(tab) do
-      if type(key) == "number" then
-        if type(value) == "table" then
-          flatten(value, flat)
-        else
-          flat[#flat + 1] = value
-        end
+      local _exp_0 = type(value)
+      if "table" == _exp_0 then
+        flatten(value, flat)
       else
-        if type(value) == "table" then
-          flat[key] = table.concat(value(' '))
+        local _exp_1 = type(key)
+        if "number" == _exp_1 then
+          flat[#flat + 1] = value
         else
           flat[key] = value
         end
@@ -69,61 +64,39 @@ do
     end
     return ary, tab
   end
-  local attrib
-  attrib = function(args)
-    local res = setmetatable({ }, {
-      __tostring = function(self)
-        local tab
-        do
-          local _accum_0 = { }
-          local _len_0 = 1
-          for key, value in pairs(self) do
-            if type(value) == 'string' or type(value) == 'number' then
-              _accum_0[_len_0] = tostring(key) .. "=\"" .. tostring(value) .. "\""
-              _len_0 = _len_0 + 1
-            end
-          end
-          tab = _accum_0
-        end
-        return #tab > 0 and ' ' .. table.concat(tab, ' ') or ''
-      end
-    })
-    for key, value in pairs(args) do
-      if type(key) == 'string' then
-        res[key] = value
-        local r = true
-      end
-    end
-    return res
-  end
-  local handle
-  handle = function(parent, args)
-    for _index_0 = 1, #args do
-      local arg = args[_index_0]
-      local _exp_0 = type(arg)
+  local handle_inner
+  handle_inner = function(element, inner)
+    for _index_0 = 1, #inner do
+      local item = inner[_index_0]
+      local _exp_0 = type(item)
       if 'table' == _exp_0 then
-        handle(arg)
+        handle_inner(element, item)
       elseif 'function' == _exp_0 then
-        arg()
+        local previous = Parent
+        Parent = element
+        item()
+        Parent = previous
       else
-        print(tostring(arg))
+        Parent:appendChild(createtextnode(tostring(item)))
       end
     end
-    return parent
+    return element
   end
   node = function(nodename, ...)
-    local attributes, content = (function(a, c)
-      return attrib(a), b
-    end)(split(flatten({
+    local content, attributes = split(flatten({
       ...
-    })))
-    local new = handle(create_node(nodename), attrib)
+    }))
+    local New = handle_inner(createelement(nodename), content)
+    for key, value in pairs(attributes) do
+      New:setAttribute(tostring(key), tostring(value))
+    end
+    return Parent:appendChild(New)
   end
-  return environment
+  environment = _ENV
 end
-local _
-_ = function(fnc)
-  assert(type(fnc) == 'function', 'wrong argument to render, expecting function')
+local template
+template = function(fnc)
+  assert(type(fnc) == 'function', 'wrong argument type, expecting function')
   do
     local upvaluejoin = debug.upvaluejoin
     local _ENV = environment
@@ -131,30 +104,16 @@ _ = function(fnc)
       return aaaa()
     end), 1)
   end
-  return function(out, ...)
-    if out == nil then
-      out = print
-    end
-    environment.print = out
+  return function(parent, ...)
+    assert(parent, 'No parent node given!')
+    environment.Parent = parent
     return fnc(...)
   end
 end
-local render
-render = function(out, fnc)
-  return build(fnc)(out)
-end
-local environment = {
-  xml = env(function(print, tagname, inner, args)
-    print("<" .. tostring(tagname) .. tostring(attrib(args)) .. tostring(#inner == 0 and ' /' or '') .. ">")
-    if not (#inner == 0) then
-      handle(print, inner)
-    end
-    if not ((#inner == 0)) then
-      return print("</" .. tostring(tagname) .. ">")
-    end
-  end)
-}
 return {
   environment = environment,
-  xml = make(environment.xml)
+  template = template,
+  generate = function(parent, func)
+    return template(func)(parent)
+  end
 }
