@@ -1,14 +1,14 @@
 local createelement, createtextnode
 do
-  local global = require('js').global
+  local doc = require('js').global.document
   createelement, createtextnode = (function()
-    local _base_0 = global
+    local _base_0 = doc
     local _fn_0 = _base_0.createElement
     return function(...)
       return _fn_0(_base_0, ...)
     end
   end)(), (function()
-    local _base_0 = global
+    local _base_0 = doc
     local _fn_0 = _base_0.createTextNode
     return function(...)
       return _fn_0(_base_0, ...)

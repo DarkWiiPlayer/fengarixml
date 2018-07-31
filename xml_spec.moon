@@ -2,17 +2,19 @@ _buf = require"strbuffer"
 package.path = '?.lua'
 package.loaded.js = {
 	global: {
-		createElement: (t) =>
-			print "Creating #{t} node"
-			setmetatable {
-				appendChild: (n) => print "appending #{n} to #{@}"
-				setAttribute: (k,v) => print "Setting #{k} to #{v} on #{@}"
-			}, {
-				__tostring: => t
-			}
-		createTextNode: (t) =>
-			print "Inserting '#{t}'"
-			setmetatable {}, {__tostring: => "Text Node (#{t})"}
+		document: {
+			createElement: (t) =>
+				print "Creating #{t} node"
+				setmetatable {
+					appendChild: (n) => print "appending #{n} to #{@}"
+					setAttribute: (k,v) => print "Setting #{k} to #{v} on #{@}"
+				}, {
+					__tostring: => t
+				}
+			createTextNode: (t) =>
+				print "Inserting '#{t}'"
+				setmetatable {}, {__tostring: => "Text Node (#{t})"}
+		}
 	}
 }
 
@@ -31,4 +33,4 @@ template = fengarixml.template ->
 	div 'Hello World!'
 	img src: 'Hello World'
 
-template(require'js'.global\createElement 'TOP')
+template(require'js'.global.document\createElement 'TOP')

@@ -1,6 +1,6 @@
 createelement, createtextnode = do
-	global = require'js'.global
-	global\createElement, global\createTextNode
+	doc = require'js'.global.document
+	doc\createElement, doc\createTextNode
 
 environment = do
 	env = do
