@@ -13,6 +13,6 @@ dependencies = {
 build = {
    type = "builtin",
    modules = {
-     moonxml = 'xml.lua'
+     fengarixml = 'xml.lua'
    }
 }
