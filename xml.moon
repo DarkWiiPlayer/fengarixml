@@ -47,7 +47,7 @@ environment = do
 					item!
 					export Parent = previous
 				else
-					Parent\appendChild createtextnode tostring item
+					element\appendChild createtextnode tostring item
 		element
 
 	export node = (nodename, ...) ->

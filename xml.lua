@@ -77,7 +77,7 @@ do
         item()
         Parent = previous
       else
-        Parent:appendChild(createtextnode(tostring(item)))
+        element:appendChild(createtextnode(tostring(item)))
       end
     end
     return element
