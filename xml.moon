@@ -53,24 +53,24 @@ env = (make_tag) ->
 	return environment
 
 make = if _VERSION == 'Lua 5.1' then
-  (environment) ->
-    (fnc) ->
-      assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-      setfenv(fnc, environment)
-      return (out=print, ...) ->
-        environment.print = out
-        return fnc(...)
+	(environment) ->
+		(fnc) ->
+			assert(type(fnc)=='function', 'wrong argument to render, expecting function')
+			setfenv(fnc, environment)
+			return (out=print, ...) ->
+				environment.print = out
+				return fnc(...)
 else
-  (environment) ->
-    (fnc) ->
-      assert(type(fnc)=='function', 'wrong argument to render, expecting function')
-      do
-        upvaluejoin = debug.upvaluejoin
-        _ENV = environment
-        upvaluejoin(fnc, 1, (-> aaaa!), 1) -- Set environment
-      return (out=print, ...) ->
-        environment.print = out
-        return fnc(...)
+	(environment) ->
+		(fnc) ->
+			assert(type(fnc)=='function', 'wrong argument to render, expecting function')
+			do
+				upvaluejoin = debug.upvaluejoin
+				_ENV = environment
+				upvaluejoin(fnc, 1, (-> aaaa!), 1) -- Set environment
+			return (out=print, ...) ->
+				environment.print = out
+				return fnc(...)
 
 render = (out, fnc) ->
 	build(fnc)(out)
