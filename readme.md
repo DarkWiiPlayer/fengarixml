@@ -1,3 +1,10 @@
+Warning
+=======
+
+This project is based on a way outdated version of MoonXML and only meant as a proof of concept.
+
+With newer versions of MoonXML it should be possible to implement dom-node generation on top of the core, not as a fork, using the node handlers.
+
 FengariXML
 ==========
 
